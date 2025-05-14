@@ -52,7 +52,7 @@ jobs:
       - name: Checkout GitOps repo via SSH
         uses: actions/checkout@v4
         with:
-          repository: ${{ steps.lower.outputs.owner }}/PTI-WellTrackGitOps
+          repository: ${{ steps.meta.outputs.owner }}/PTI-WellTrackGitOps
           path: gitops
           ssh-key: ${{ secrets.GIT_DEPLOY_KEY }}
 
