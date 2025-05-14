@@ -27,6 +27,6 @@ jobs:
 
       - name: Build and Push Docker image
         run: |
-          IMAGE=ghcr.io/${{ github.repository_owner }}/pti-welltrackml
+          IMAGE=ghcr.io/salieriw/pti-welltrackml
           docker build -t $IMAGE:latest .
           docker push $IMAGE:latest
