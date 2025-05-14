@@ -27,6 +27,10 @@ jobs:
 
       - name: Build and Push Docker image
         run: |
-          IMAGE=ghcr.io/salieriw/pti-welltrackml
-          docker build -t $IMAGE:latest .
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE=ghcr.io/$OWNER/pti-welltrackml
+          SHORT_SHA=${GITHUB_SHA::7}
+
+          docker build -t $IMAGE:latest -t $IMAGE:$SHORT_SHA .
           docker push $IMAGE:latest
+          docker push $IMAGE:$SHORT_SHA
