@@ -179,12 +179,12 @@ def analyze():
         analysis_results = {}
         print("New features:", new_features)
         for key, new_value in new_features.items():
+            if key not in COMPARISON_THRESHOLD:
+                continue  # O puedes hacer logging
             calibration_value = calibration_values.get(key)
             if calibration_value is not None and isinstance(new_value, (int, float)):
-                if abs(new_value - calibration_value) > COMPARISON_THRESHOLD.get(key):
-                    analysis_results[f"{key}_deviated"] = True
-                else:
-                    analysis_results[f"{key}_deviated"] = False
+                threshold = COMPARISON_THRESHOLD[key]
+                analysis_results[f"{key}_deviated"] = abs(new_value - calibration_value) > threshold
             else:
                 analysis_results[key] = new_value
         analysis_results["finger_count"] = new_features.get("finger_count", 0)
