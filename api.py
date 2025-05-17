@@ -166,6 +166,57 @@ def calibrate():
 def analyze():
     if not calibration_values:
         return jsonify({"error": "Please calibrate first by sending an image to /calibrate"}), 400
+
+    if 'image' not in request.files:
+        return jsonify({"error": "No image part in the request"}), 400
+
+    file = request.files['image']
+    if file.filename == '':
+        return jsonify({"error": "No selected image"}), 400
+
+    if file:
+        image_bytes = file.read()
+        features_list = [process_image(image_bytes) for _ in range(30)]
+        new_features = {
+            key: sum(f[key] for f in features_list if key in f and isinstance(f[key], (int, float))) / len(features_list)
+            for key in features_list[0]
+        }
+
+        analysis_results = {}
+        print("New features:", new_features)
+
+        for key, new_value in new_features.items():
+            if key not in COMPARISON_THRESHOLD:
+                continue  # Evita claves sin umbral
+            calibration_value = calibration_values.get(key)
+            if calibration_value is not None and isinstance(new_value, (int, float)):
+                threshold = COMPARISON_THRESHOLD[key]
+                analysis_results[f"{key}_deviated"] = bool(abs(new_value - calibration_value) > threshold)
+            else:
+                analysis_results[key] = new_value
+
+        # Agrega finger_count como está, sin evaluar desviación
+        analysis_results["finger_count"] = int(new_features.get("finger_count", 0))
+
+        # Clasificación con el modelo
+        if app.prediction_model:
+            image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+            image = np.asarray(image.resize((160, 160)))
+            prediction = app.prediction_model.predict(np.asarray([image]))
+
+            print("Predictions:", prediction)
+            predicted_class = int(np.argmax(prediction))  # clase con mayor probabilidad
+
+            analysis_results["drinking"] = bool(predicted_class == 4)  # clase 4 = "drinking"
+        else:
+            analysis_results["drinking"] = "Model not loaded"
+
+        return jsonify(analysis_results)
+
+    return jsonify({"error": "Analysis failed"})
+
+    if not calibration_values:
+        return jsonify({"error": "Please calibrate first by sending an image to /calibrate"}), 400
     if 'image' not in request.files:
         return jsonify({"error": "No image part in the request"}), 400
     file = request.files['image']
